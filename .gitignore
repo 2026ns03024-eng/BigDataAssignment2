@@ -1,0 +1,29 @@
+# Local cluster config (copy from config.example.env)
+config.env
+
+# Data and artifacts
+data/*.csv
+data/*.jsonl
+data/*.json
+output/
+jars/
+*.jar
+
+# Python
+__pycache__/
+*.py[cod]
+.Python
+*.egg-info/
+.venv/
+venv/
+
+# MongoDB local data
+mongo-data/
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+
+# Report build (optional PDF export)
+report/*.pdf
