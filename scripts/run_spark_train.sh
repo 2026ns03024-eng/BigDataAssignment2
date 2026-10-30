@@ -4,6 +4,9 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 mkdir -p output
 
+# shellcheck disable=SC1091
+source "$ROOT/scripts/source_cluster_env.sh" 2>/dev/null || true
+
 set -a
 # shellcheck disable=SC1091
 [[ -f config.env ]] && source config.env

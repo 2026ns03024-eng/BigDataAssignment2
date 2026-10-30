@@ -4,6 +4,8 @@ MongoDB holds operational documents for Scenario 3. Spark reads/writes via the M
 
 ## Option A — Lab already has MongoDB
 
+You already saw **MongoDB 8.x** and **mongosh 2.9** on the cluster — use the lab service only. **Do not** run `install_mongo_user.sh` unless `mongod` is missing for your user.
+
 ```bash
 which mongod mongosh
 mongosh --eval 'db.runCommand({ ping: 1 })'
