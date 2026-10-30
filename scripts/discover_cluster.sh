@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Discover Prayogshala / lab environment for Assignment 2 Track C.
+# Discover cluster software for Assignment 2 Track C.
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
@@ -55,7 +55,7 @@ if command -v spark-submit >/dev/null 2>&1; then
 else
   echo "spark-submit NOT FOUND on PATH"
   echo "  Try:  source scripts/source_cluster_env.sh"
-  echo "  Then start Spark/Hadoop services from Prayogshala (3/3 nodes active)."
+  echo "  Then start Spark master/worker (see STEPS/01b-two-node-cluster.md)."
   echo "  Search hints:"
   find /usr/local /opt /usr/hdp -maxdepth 5 -name spark-submit -type f 2>/dev/null | head -5 || true
 fi
@@ -68,8 +68,7 @@ if command -v yarn >/dev/null 2>&1; then
   if echo "$YARN_OUT" | grep -qiE 'Total Nodes:[1-9]|RUNNING'; then
     YARN_OK=1
   elif echo "$YARN_OUT" | grep -qi 'Retrying connect'; then
-    echo "# ResourceManager not reachable — Hadoop/YARN may be stopped. Use Prayogshala to start cluster services,"
-    echo "# or set SPARK_MASTER=spark://<this-host>:7077 if Spark standalone is running."
+    echo "# ResourceManager not reachable — use Spark standalone spark://<driver-ip>:7077"
   fi
 else
   echo "yarn NOT FOUND on PATH (source source_cluster_env.sh or use Spark standalone master URL)"
@@ -120,8 +119,8 @@ else
 fi
 echo "DATA_CSV=data/diabetic_data.csv"
 echo ""
-echo "# Prayogshala: /etc/hosts often has no master/slave names — see STEPS/01b-prayogshala-spark-cluster.md"
-echo "# Use master IP in SPARK_MASTER and MONGO_HOST (not 127.0.0.1 for distributed Spark)."
+echo "# Two-VM cluster: see STEPS/01b-two-node-cluster.md and cluster/cluster.env.example"
+echo "# Use driver VM IP in SPARK_MASTER and MONGO_HOST when executors run on another VM."
 echo ""
 echo "Copy the block above into config.env after: cp config.example.env config.env"
 echo "Before Spark jobs, each new shell:  source scripts/source_cluster_env.sh"

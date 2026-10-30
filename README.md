@@ -2,28 +2,27 @@
 
 **Track C — Hybrid:** MongoDB for document storage and aggregation analytics; Apache Spark (MLlib) for distributed feature engineering and readmission classification; predictions written back to MongoDB.
 
-**Platform:** BITS Prayogshala cluster (master + slave1 + slave2). This repository is developed locally and run entirely on the cluster after `git pull`.
+**Platform:** Self-hosted **two-VM** cluster (SSH). Run discovery and STEPS on the driver VM; see [old-context.md](old-context.md) when opening a **new** agent chat on the VMs.
 
-## Quick start (on cluster master)
+## Quick start (driver VM)
 
-1. Follow [STEPS/00-prerequisites.md](STEPS/00-prerequisites.md) through [STEPS/08-screenshots.md](STEPS/08-screenshots.md) in order.
-2. Copy `config.example.env` to `config.env` and adjust using output from `bash scripts/discover_cluster.sh`.
-3. Run the pipeline: data prep → Mongo load → Mongo analytics → Spark training → charts.
+1. [STEPS/00-prerequisites.md](STEPS/00-prerequisites.md) → [STEPS/08-screenshots.md](STEPS/08-screenshots.md)
+2. `cp config.example.env config.env` (or `scripts/apply_cluster_env.sh`)
+3. `bash scripts/discover_cluster.sh` before first run
 
 ## Repository layout
 
 | Path | Purpose |
 |------|---------|
-| `STEPS/` | Lab instructions for Prayogshala |
-| `scripts/` | Python and shell automation |
-| `queries/analytics.js` | Aggregation pipelines for `mongosh` screenshots |
-| `report/REPORT.md` | Submission write-up (fill metrics after cluster run) |
-| `data/` | UCI CSV and generated JSONL (not committed) |
-| `output/` | `metrics.json` from Spark (not committed) |
+| [old-context.md](old-context.md) | Handoff for new Cursor sessions on the cluster |
+| `STEPS/` | Runbook (revalidate on your VMs) |
+| `scripts/` | Pipeline and discovery |
+| `queries/analytics.js` | Mongo aggregations for screenshots |
+| `report/REPORT.md` | Submission (fill metrics after Spark run) |
 
 ## Dataset
 
-UCI *Diabetes 130-US hospitals* encounter data, enriched with synthetic admission timestamps, prior-encounter links, vital sign samples, and brief clinical note text for document shape. See `report/REPORT.md` for limitations.
+UCI *Diabetes 130-US hospitals*, enriched with synthetic timestamps, vitals, and notes — see `report/REPORT.md`.
 
 ## Author
 

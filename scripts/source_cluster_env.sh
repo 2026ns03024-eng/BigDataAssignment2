@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Load Spark/Hadoop paths on Prayogshala / lab VMs.
+# Load Spark/Hadoop paths on Linux VMs (lab or self-hosted).
 # Usage (from repo root):  source scripts/source_cluster_env.sh
 #
 # Do NOT run under sudo — root uses a minimal PATH and hides lab tools.
@@ -68,7 +68,7 @@ fi
 if command -v spark-submit >/dev/null 2>&1; then
   echo "SPARK_HOME=${SPARK_HOME:-unknown}  spark-submit=$(command -v spark-submit)"
 else
-  echo "spark-submit still not on PATH — start Spark/Hadoop from Prayogshala UI or ask lab support." >&2
+  echo "spark-submit still not on PATH — set SPARK_HOME or install Spark; see STEPS/01b." >&2
 fi
 
 if command -v yarn >/dev/null 2>&1; then

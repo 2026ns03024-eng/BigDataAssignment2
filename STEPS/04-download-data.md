@@ -11,7 +11,7 @@ Expected file: `data/diabetic_data.csv` (Diabetes 130-US hospitals).
 
 1. On a machine with internet, download:
    - https://archive.ics.uci.edu/static/public/296/data.csv
-2. Save as `data/diabetic_data.csv` on the master (SCP, Prayogshala file upload, etc.).
+2. Save as `data/diabetic_data.csv` on the driver VM (SCP, `rsync`, etc.).
 
 Quick sanity check:
 

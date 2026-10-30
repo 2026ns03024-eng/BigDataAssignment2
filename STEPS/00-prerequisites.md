@@ -1,43 +1,42 @@
-# Step 00 — Prerequisites and Prayogshala access
+# Step 00 — Prerequisites (self-hosted cluster)
 
-## 1. Start cluster nodes
+## 1. Two-VM layout (typical)
 
-1. Open [Prayogshala login](https://prayogshala.bits-pilani.ac.in/auth/login) and sign in with your BITS credentials.
-2. Open the **Big Data Systems** lab (or the environment that lists **Node 1 master**, **Node 2 slave1**, **Node 3 slave2**).
-3. Start all three nodes until the dashboard shows **3/3 Active** (or equivalent).
-4. Open a terminal **on the master node** (Node 1). All commands in this project assume you are in that shell unless noted.
+| VM | Role |
+|----|------|
+| **VM1** | Git repo, MongoDB, Spark master, Python driver, `spark-submit` |
+| **VM2** | Spark worker |
 
-**Do not use `sudo`** for discovery, Python, Mongo load, or Spark jobs. Sudo hides `spark-submit`, `yarn`, and `pip` on most lab images.
+Connect both with SSH (e.g. Cursor Remote). Exact IPs and packages are **not** fixed in this repo — discover them on your machines.
 
-In each terminal session, from the repo root:
+**Do not use `sudo`** for project scripts; it often hides `spark-submit` and pip from your user PATH.
+
+Each shell on VM1:
 
 ```bash
+cd ~/workspace/BigDataAssignment2   # or your clone path
 source scripts/source_cluster_env.sh
 ```
 
-## 2. Get the project on the master
+## 2. Clone or pull the repo
 
-From your home directory (or a workspace folder):
-
-```bash
-git clone <YOUR_REMOTE_URL> bds-assignment2
-cd bds-assignment2
-```
-
-If you already cloned once, update before each session:
+On VM1 (and sync repo to VM2 if Spark worker needs the same `SPARK_HOME` paths only — code can stay on VM1):
 
 ```bash
-cd bds-assignment2
+git clone <YOUR_REMOTE_URL> BigDataAssignment2
+cd BigDataAssignment2
 git pull
 ```
 
-**Screenshot (for report):** Cluster dashboard with three active nodes.
+## 3. New Cursor chat on these VMs?
 
-## 3. What you need on the master
+Open [old-context.md](../old-context.md) in the agent chat so it knows Track C scope, repo layout, and that it must **rediscover** your cluster and finish STEPS + report metrics.
 
-- `python3` and **`python3 -m pip`** (a `pip3` command is not required)
-- `java` (for Spark; usually preinstalled on the lab image)
-- `spark-submit` on `PATH`
-- Optional: `mongod` / `mongosh` — if missing, Step 02 installs MongoDB in your home directory (no root).
+## 4. Requirements
+
+- Java 17+ (Spark 4.x)
+- `python3` and `python3 -m pip` (via `scripts/install_python_deps.sh`)
+- MongoDB + `mongosh` on VM1 (or user-local install per STEPS/02)
+- Spark on PATH after `source scripts/source_cluster_env.sh`
 
 Proceed to [01-discover-cluster.md](01-discover-cluster.md).
