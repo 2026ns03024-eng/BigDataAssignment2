@@ -41,7 +41,8 @@ def main():
         db.encounters.count_documents({"readmitted": x}) for x in labels
     ]
     fig, ax = plt.subplots(figsize=(6, 4))
-    ax.bar(labels, counts, color=["#4C72B0", "#55A868", "#C44E52"])
+    bars = ax.bar(labels, counts, color=["#4C72B0", "#55A868", "#C44E52"])
+    ax.bar_label(bars, labels=["{:,}".format(count) for count in counts], padding=3)
     ax.set_title("Readmission label distribution (encounters)")
     ax.set_ylabel("Count")
     fig.tight_layout()
@@ -51,24 +52,55 @@ def main():
     # 2) Readmission rate by age band
     pipe = [
         {
+            "$lookup": {
+                "from": "patients",
+                "localField": "patient_nbr",
+                "foreignField": "patient_nbr",
+                "as": "patient",
+            }
+        },
+        {"$unwind": "$patient"},
+        {
             "$group": {
-                "_id": "$age",
+                "_id": "$patient.age",
                 "n": {"$sum": 1},
                 "pos": {"$sum": {"$cond": [{"$eq": ["$readmitted", "<30"]}, 1, 0]}},
             }
         },
         {"$match": {"n": {"$gte": 500}}},
-        {"$sort": {"_id": 1}},
     ]
     rows = list(db.encounters.aggregate(pipe))
-    ages = [r["_id"] for r in rows]
-    rates = [r["pos"] / r["n"] for r in rows]
+    age_order = [
+        "[0-10)",
+        "[10-20)",
+        "[20-30)",
+        "[30-40)",
+        "[40-50)",
+        "[50-60)",
+        "[60-70)",
+        "[70-80)",
+        "[80-90)",
+        "[90-100)",
+    ]
+    age_stats = {row["_id"]: row for row in rows}
+    ages = [age for age in age_order if age in age_stats]
+    rates = [age_stats[age]["pos"] / age_stats[age]["n"] for age in ages]
     fig, ax = plt.subplots(figsize=(8, 4))
-    ax.bar(range(len(ages)), rates, color="#8172B2")
+    bars = ax.bar(range(len(ages)), rates, color="#8172B2")
+    ax.bar_label(
+        bars,
+        labels=[
+            "{:.1%}\nn={:,}".format(rate, age_stats[age]["n"])
+            for age, rate in zip(ages, rates)
+        ],
+        padding=3,
+        fontsize=8,
+    )
     ax.set_xticks(range(len(ages)))
     ax.set_xticklabels(ages, rotation=45, ha="right")
+    ax.set_ylim(0, max(rates) * 1.15)
     ax.set_ylabel("30-day readmission rate")
-    ax.set_title("Readmission rate by age bracket (UCI encoding)")
+    ax.set_title("30-day readmission rate by age bracket (encounters, n >= 500)")
     fig.tight_layout()
     fig.savefig(FIG / "fig2_readmission_by_age.png", dpi=120)
     plt.close(fig)
@@ -89,16 +121,15 @@ def main():
         bucket_stats[b]["n"] += 1
         bucket_stats[b]["pos"] += doc["flag"]
     order = ["1-3", "4-7", "8-11", "12-15", "16+"]
-    brates = [
-        bucket_stats[b]["pos"] / bucket_stats[b]["n"]
-        for b in order
-        if b in bucket_stats
-    ]
+    buckets = [b for b in order if b in bucket_stats]
+    brates = [bucket_stats[b]["pos"] / bucket_stats[b]["n"] for b in buckets]
     fig, ax = plt.subplots(figsize=(6, 4))
-    ax.plot(order[: len(brates)], brates, marker="o")
+    bars = ax.bar(buckets, brates, color="#4C72B0")
+    ax.bar_label(bars, labels=["{:.1%}".format(rate) for rate in brates], padding=3)
+    ax.set_ylim(0, max(brates) * 1.15)
     ax.set_ylabel("Readmission rate (<30)")
     ax.set_xlabel("Length of stay (days)")
-    ax.set_title("LOS bucket vs readmission rate")
+    ax.set_title("30-day readmission rate by length-of-stay bucket")
     fig.tight_layout()
     fig.savefig(FIG / "fig3_los_readmission.png", dpi=120)
     plt.close(fig)
@@ -119,6 +150,7 @@ def main():
         ax.set_xlabel("Sample index (3h spacing)")
         ax.set_ylabel("bpm")
         ax.set_title("Vital signs for encounter {}".format(eid))
+        ax.set_ylim(60, 120)
         ax.legend()
         fig.tight_layout()
         fig.savefig(FIG / "fig4_vitals_series.png", dpi=120)
@@ -135,14 +167,17 @@ def main():
         x = range(len(names))
         width = 0.35
         fig, ax = plt.subplots(figsize=(6, 4))
-        ax.bar([i - width / 2 for i in x], auroc, width, label="AUROC")
-        ax.bar([i + width / 2 for i in x], aupr, width, label="AUPR")
+        auroc_bars = ax.bar([i - width / 2 for i in x], auroc, width, label="AUROC")
+        aupr_bars = ax.bar([i + width / 2 for i in x], aupr, width, label="AUPR")
+        ax.bar_label(auroc_bars, fmt="%.3f", padding=3, fontsize=8)
+        ax.bar_label(aupr_bars, fmt="%.3f", padding=3, fontsize=8)
         ax.set_xticks(list(x))
         ax.set_xticklabels(names)
         ax.set_ylim(0, 1)
-        ax.legend()
+        ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.18), ncol=2)
         ax.set_title("Spark MLlib test-set performance")
         fig.tight_layout()
+        fig.subplots_adjust(bottom=0.23)
         fig.savefig(FIG / "fig5_model_metrics.png", dpi=120)
         plt.close(fig)
     else:

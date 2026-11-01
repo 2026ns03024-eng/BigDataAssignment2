@@ -1,0 +1,70 @@
+cluster:
+  nodes: 2
+
+nodes:
+  - hostname: in1xxayv010
+    platform: "CVM"
+    version: "RT-35"
+    harvester_port: 102882
+
+    compute:
+      ram: "8GB"
+      cpu: 4
+
+    storage:
+      boot_disk: "50Gi"
+      shared_disk:
+        fields: 5
+      snapshots: None
+
+    network:
+      nics: 3
+
+      eth0:
+        network: "pub-vlan148"
+        ip: "10.210.25.149"
+        mac: "f6:7f:0e:13:df:64"
+
+      eth1:
+        network: "pvt1"
+        ip: "192.168.224.240"
+        mac: "76:a4:fa:55:67:2a"
+
+      eth2:
+        network: "pvt2"
+        ip: "192.168.240.240"
+        mac: "52:d9:2f:41:4b:5a"
+
+
+  - hostname: in1xxayv009
+    platform: "CVM"
+    version: "RT-35"
+    harvester_port: 102882
+
+    compute:
+      ram: "8GB"
+      cpu: 4
+
+    storage:
+      boot_disk: "50Gi"
+      shared_disk:
+        fields: 5
+      snapshots: None
+
+    network:
+      nics: 3
+
+      eth0:
+        network: "pub-vlan148"
+        ip: "10.210.25.150"
+        mac: "7a:c9:e9:63:2c:c1"
+
+      eth1:
+        network: "pvt1"
+        ip: "192.168.224.241"
+        mac: "d2:17:7d:7b:b8:c3"
+
+      eth2:
+        network: "pvt2"
+        ip: "192.168.240.241"
+        mac: "22:b3:83:0a:b2:7f"

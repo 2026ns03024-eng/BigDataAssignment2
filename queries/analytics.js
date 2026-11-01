@@ -26,6 +26,7 @@ db.encounters.aggregate([
 print("\n=== 2) $graphLookup: prior stays for one patient chain (limit 3 roots) ===");
 db.encounters.aggregate([
   { $match: { prev_encounter_id: { $ne: null } } },
+  { $sort: { encounter_id: 1 } },
   { $limit: 3 },
   { $graphLookup: {
       from: "encounters",
@@ -43,7 +44,7 @@ db.encounters.aggregate([
 ]).forEach(doc => printjson(doc));
 
 print("\n=== 3) $setWindowFields: rolling mean heart rate within encounter (one encounter) ===");
-const sampleEnc = db.encounters.findOne({}, { encounter_id: 1 });
+const sampleEnc = db.encounters.find({}, { encounter_id: 1 }).sort({ encounter_id: 1 }).limit(1).next();
 const eid = sampleEnc.encounter_id;
 db.vitals.aggregate([
   { $match: { encounter_id: eid } },

@@ -20,14 +20,25 @@ def run_lookup(db):
         }},
         {"$unwind": "$patient"},
         {"$group": {
-            "_id": "$patient.race",
+            "_id": {
+                "$cond": [
+                    {"$in": [
+                        {"$toLower": {"$ifNull": ["$patient.race", ""]}},
+                        ["", "nan", "?"],
+                    ]},
+                    "Unknown",
+                    "$patient.race",
+                ]
+            },
             "encounters": {"$sum": 1},
             "readmit_30d": {
                 "$sum": {"$cond": [{"$eq": ["$readmitted", "<30"]}, 1, 0]}
             },
         }},
+        {"$addFields": {
+            "readmit_rate": {"$divide": ["$readmit_30d", "$encounters"]},
+        }},
         {"$sort": {"encounters": -1}},
-        {"$limit": 8},
     ]
     return list(db.encounters.aggregate(pipe, allowDiskUse=True))
 
@@ -35,6 +46,7 @@ def run_lookup(db):
 def run_graph(db):
     pipe = [
         {"$match": {"prev_encounter_id": {"$ne": None}}},
+        {"$sort": {"encounter_id": 1}},
         {"$limit": 500},
         {"$graphLookup": {
             "from": "encounters",
@@ -54,7 +66,9 @@ def run_graph(db):
 
 
 def run_window(db):
-    sample = db.encounters.find_one({}, {"encounter_id": 1})
+    sample = db.encounters.find_one(
+        {}, {"encounter_id": 1}, sort=[("encounter_id", 1)]
+    )
     if not sample:
         return []
     eid = sample["encounter_id"]

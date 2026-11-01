@@ -1,12 +1,12 @@
 # Step 06 — MongoDB aggregation analytics (Track A operations)
 
-Run the Python driver that executes the same pipelines as `queries/analytics.js`:
+Run the Python driver for aggregation summaries:
 
 ```bash
 python3 scripts/mongo_analytics.py | tee output/mongo_analytics.log
 ```
 
-For manual / screenshot-friendly runs, use `mongosh`:
+For manual / screenshot-friendly operator examples, use `mongosh`:
 
 ```bash
 mongosh "mongodb://${MONGO_HOST}:${MONGO_PORT}/${MONGO_DB}" --file queries/analytics.js

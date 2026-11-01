@@ -25,6 +25,12 @@ if [[ -f "$ROOT/scripts/source_cluster_env.sh" ]]; then
 else
   echo "(source_cluster_env.sh missing)"
 fi
+set -a
+[[ -f "$ROOT/config.env" ]] && source "$ROOT/config.env"
+set +a
+MONGO_HOST="${MONGO_HOST:-${SPARK_LOCAL_IP:-127.0.0.1}}"
+MONGO_PORT="${MONGO_PORT:-27017}"
+MONGO_DB="${MONGO_DB:-readmission}"
 echo ""
 echo "=== /etc/hosts (grep -E 'master|slave|node') ==="
 grep -E 'master|slave|node|prayog' /etc/hosts 2>/dev/null || echo "(no matching lines or permission denied)"
@@ -79,16 +85,13 @@ command -v mongod >/dev/null 2>&1 && mongod --version | head -1 || echo "mongod 
 command -v mongosh >/dev/null 2>&1 && mongosh --version 2>&1 | head -1 || echo "mongosh NOT FOUND (try mongo shell)"
 command -v mongo >/dev/null 2>&1 && mongo --version 2>&1 | head -1 || true
 if command -v mongosh >/dev/null 2>&1; then
-  mongosh --quiet --eval 'db.runCommand({ ping: 1 })' 2>&1 | head -3 || echo "mongosh ping failed — is mongod running?"
+  mongosh --host "$MONGO_HOST" --port "$MONGO_PORT" --quiet --eval 'db.runCommand({ ping: 1 })' 2>&1 | head -3 || echo "mongosh ping failed — is mongod running?"
 fi
 echo ""
 echo "=== Suggested config.env values ==="
-MONGO_HOST="${MONGO_HOST:-127.0.0.1}"
-MONGO_PORT="${MONGO_PORT:-27017}"
-MONGO_DB="${MONGO_DB:-readmission}"
+DRIVER_IP="${SPARK_LOCAL_IP:-CHANGE_ME_DRIVER_PRIVATE_IP}"
 
-HOST_FQDN="$(hostname -f 2>/dev/null || hostname)"
-SPARK_MASTER_SUGGEST="spark://${HOST_FQDN}:7077"
+SPARK_MASTER_SUGGEST="spark://${DRIVER_IP}:7077"
 if [[ "$YARN_OK" -eq 1 ]]; then
   SPARK_MASTER_SUGGEST="yarn"
 fi
@@ -96,6 +99,7 @@ echo "MONGO_HOST=$MONGO_HOST"
 echo "MONGO_PORT=$MONGO_PORT"
 echo "MONGO_DB=$MONGO_DB"
 echo "SPARK_MASTER=$SPARK_MASTER_SUGGEST"
+echo "SPARK_LOCAL_IP=$DRIVER_IP"
 
 MAJOR=""
 MINOR=""
@@ -120,7 +124,7 @@ fi
 echo "DATA_CSV=data/diabetic_data.csv"
 echo ""
 echo "# Two-VM cluster: see STEPS/01b-two-node-cluster.md and cluster/cluster.env.example"
-echo "# Use driver VM IP in SPARK_MASTER and MONGO_HOST when executors run on another VM."
+echo "# Set SPARK_LOCAL_IP to the driver's private IP reachable from the worker; use it in MONGO_HOST and SPARK_MASTER."
 echo ""
 echo "Copy the block above into config.env after: cp config.example.env config.env"
 echo "Before Spark jobs, each new shell:  source scripts/source_cluster_env.sh"

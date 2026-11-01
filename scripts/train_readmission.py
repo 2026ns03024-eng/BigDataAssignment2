@@ -57,17 +57,43 @@ def eval_model(model, test_df, label_col="label"):
     )
     auroc = evaluator_roc.evaluate(pred)
     aupr = evaluator_pr.evaluate(pred)
-    tp = pred.filter((F.col("prediction") == 1.0) & (F.col(label_col) == 1.0)).count()
-    tn = pred.filter((F.col("prediction") == 0.0) & (F.col(label_col) == 0.0)).count()
-    fp = pred.filter((F.col("prediction") == 1.0) & (F.col(label_col) == 0.0)).count()
-    fn = pred.filter((F.col("prediction") == 0.0) & (F.col(label_col) == 1.0)).count()
-    total = pred.count()
+    positive_prediction = F.col("prediction") == 1.0
+    negative_prediction = F.col("prediction") == 0.0
+    positive_label = F.col(label_col) == 1.0
+    negative_label = F.col(label_col) == 0.0
+    counts = pred.agg(
+        F.count(F.lit(1)).alias("total"),
+        F.sum(F.when(positive_label, 1).otherwise(0)).alias("actual_positive"),
+        F.sum(F.when(negative_label, 1).otherwise(0)).alias("actual_negative"),
+        F.sum(F.when(positive_prediction & positive_label, 1).otherwise(0)).alias("tp"),
+        F.sum(F.when(negative_prediction & negative_label, 1).otherwise(0)).alias("tn"),
+        F.sum(F.when(positive_prediction & negative_label, 1).otherwise(0)).alias("fp"),
+        F.sum(F.when(negative_prediction & positive_label, 1).otherwise(0)).alias("fn"),
+    ).first()
+    total = int(counts["total"])
+    tp, tn, fp, fn = (int(counts[key] or 0) for key in ("tp", "tn", "fp", "fn"))
+    actual_positive = int(counts["actual_positive"] or 0)
+    actual_negative = int(counts["actual_negative"] or 0)
     acc = (tp + tn) / float(total) if total else 0.0
+    precision = tp / float(tp + fp) if tp + fp else 0.0
+    recall = tp / float(tp + fn) if tp + fn else 0.0
+    specificity = tn / float(tn + fp) if tn + fp else 0.0
+    f1 = (
+        2.0 * precision * recall / (precision + recall)
+        if precision + recall
+        else 0.0
+    )
     return {
         "auroc": round(auroc, 4),
         "aupr": round(aupr, 4),
         "accuracy": round(acc, 4),
+        "precision": round(precision, 4),
+        "recall": round(recall, 4),
+        "f1": round(f1, 4),
+        "specificity": round(specificity, 4),
         "confusion": {"tp": tp, "tn": tn, "fp": fp, "fn": fn},
+        "test_positive_rows": actual_positive,
+        "test_negative_rows": actual_negative,
         "predictions_df": pred,
     }
 
@@ -84,22 +110,17 @@ def main():
     )
     spark.sparkContext.setLogLevel("WARN")
 
+    numpy_versions = spark.sparkContext.parallelize([0], 1).map(
+        lambda _: __import__("numpy").__version__
+    ).collect()
+    print("Executor NumPy:", numpy_versions[0])
+
     enc = read_collection(spark, cfg, uri, "encounters", spark24)
     pts = read_collection(spark, cfg, uri, "patients", spark24)
-    vit = read_collection(spark, cfg, uri, "vitals", spark24).repartition(8)
-
-    vital_stats = vit.groupBy("encounter_id").agg(
-        F.avg("heart_rate_bpm").alias("hr_mean"),
-        F.stddev("heart_rate_bpm").alias("hr_std"),
-        F.min("heart_rate_bpm").alias("hr_min"),
-        F.max("heart_rate_bpm").alias("hr_max"),
-        F.avg("glucose_mg_dl").alias("glu_mean"),
-        F.stddev("glucose_mg_dl").alias("glu_std"),
-    )
-
     base = enc.join(pts.select("patient_nbr", "gender", "age"), "patient_nbr", "left")
-    base = base.join(vital_stats, "encounter_id", "left")
     base = base.withColumn("label", F.col("label_readmit_30d").cast("double"))
+    base = base.persist()
+    base.count()
 
     numeric = [
         "time_in_hospital",
@@ -110,12 +131,6 @@ def main():
         "number_emergency",
         "number_inpatient",
         "number_diagnoses",
-        "hr_mean",
-        "hr_std",
-        "hr_min",
-        "hr_max",
-        "glu_mean",
-        "glu_std",
     ]
     categorical = ["gender", "age", "A1Cresult", "diabetesMed", "insulin"]
 
@@ -136,8 +151,31 @@ def main():
         inputCols=numeric + indexed_cols, outputCol="features", handleInvalid="keep"
     )
 
-    train_all, test = base.randomSplit([0.8, 0.2], seed=42)
-    train = downsample_train(train_all)
+    test_patient = F.pmod(
+        F.xxhash64(F.col("patient_nbr"), F.lit(42)), F.lit(5)
+    ) == 0
+    train_all = base.filter(~test_patient).persist()
+    test = base.filter(test_patient).persist()
+    train_patients = train_all.select("patient_nbr").distinct().count()
+    test_patients = test.select("patient_nbr").distinct().count()
+    overlapping_patients = (
+        train_all.select("patient_nbr")
+        .distinct()
+        .intersect(test.select("patient_nbr").distinct())
+        .limit(1)
+        .count()
+    )
+    if overlapping_patients:
+        raise RuntimeError("Patient-level split contains patient overlap")
+
+    train = downsample_train(train_all).persist()
+    train_rows = train.count()
+    train_model_patients = train.select("patient_nbr").distinct().count()
+    train_label_counts = {
+        int(row["label"]): int(row["count"])
+        for row in train.groupBy("label").count().collect()
+    }
+    test_rows = test.count()
 
     from pyspark.ml import Pipeline  # noqa: E402
 
@@ -150,14 +188,25 @@ def main():
 
     prep = Pipeline(stages=stages_index + [assembler])
     prep_model = prep.fit(train)
-    train_fe = prep_model.transform(train)
-    test_fe = prep_model.transform(test)
+    train_fe = prep_model.transform(train).persist()
+    test_fe = prep_model.transform(test).persist()
+    train_fe.count()
+    test_fe.count()
+    train.unpersist()
+    train_all.unpersist()
+    test.unpersist()
+    base.unpersist()
 
     rf_model = rf.fit(train_fe)
     gbt_model = gbt.fit(train_fe)
 
     rf_metrics = eval_model(rf_model, test_fe)
     gbt_metrics = eval_model(gbt_model, test_fe)
+    if any(
+        sum(metrics["confusion"].values()) != test_rows
+        for metrics in (rf_metrics, gbt_metrics)
+    ):
+        raise RuntimeError("Confusion matrix counts do not match the held-out test size")
 
     best_name = "gbt" if gbt_metrics["auroc"] >= rf_metrics["auroc"] else "random_forest"
     best = gbt_metrics if best_name == "gbt" else rf_metrics
@@ -187,12 +236,47 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
     metrics = {
         "random_forest": {
-            k: rf_metrics[k] for k in ("auroc", "aupr", "accuracy", "confusion")
+            k: rf_metrics[k]
+            for k in (
+                "auroc",
+                "aupr",
+                "accuracy",
+                "precision",
+                "recall",
+                "f1",
+                "specificity",
+                "confusion",
+            )
         },
-        "gbt": {k: gbt_metrics[k] for k in ("auroc", "aupr", "accuracy", "confusion")},
+        "gbt": {
+            k: gbt_metrics[k]
+            for k in (
+                "auroc",
+                "aupr",
+                "accuracy",
+                "precision",
+                "recall",
+                "f1",
+                "specificity",
+                "confusion",
+            )
+        },
         "best_model": best_name,
-        "train_rows": train.count(),
-        "test_rows": test.count(),
+        "train_rows": train_rows,
+        "test_rows": test_rows,
+        "train_split_patients": train_patients,
+        "train_model_patients": train_model_patients,
+        "test_patients": test_patients,
+        "train_label_counts": train_label_counts,
+        "test_positive_rows": rf_metrics["test_positive_rows"],
+        "test_negative_rows": rf_metrics["test_negative_rows"],
+        "majority_baseline_accuracy": round(
+            max(rf_metrics["test_positive_rows"], rf_metrics["test_negative_rows"])
+            / float(test_rows),
+            4,
+        ),
+        "split_method": "patient_hash_80_20_seed_42",
+        "excluded_features": ["synthetic_vitals"],
     }
     with (out_dir / "metrics.json").open("w", encoding="utf-8") as f:
         json.dump(metrics, f, indent=2)

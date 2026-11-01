@@ -7,7 +7,7 @@ If you run `sudo bash scripts/discover_cluster.sh`, you may see **spark-submit N
 ```bash
 mkdir -p output
 source scripts/source_cluster_env.sh
-bash scripts/discover_cluster.sh | tee output/discover.log
+mkdir -p output && bash scripts/discover_cluster.sh | tee output/discover.log
 ```
 
 Repeat on **VM2** (at least Java, Spark paths, and Mongo reachability to VM1).

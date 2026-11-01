@@ -27,13 +27,13 @@ else
   exit 1
 fi
 
-if [[ ! -d "mongodb-linux-"*"/bin" ]]; then
+if [[ -z "$(find "$MONGO_HOME" -maxdepth 4 -type f -name mongod -print -quit 2>/dev/null)" ]]; then
   echo "Downloading $URL ..."
   curl -fL -o "$TGZ" "$URL"
   tar xzf "$TGZ"
 fi
 
-BIN="$(find "$MONGO_HOME" -maxdepth 2 -type f -name mongod 2>/dev/null | head -1)"
+BIN="$(find "$MONGO_HOME" -maxdepth 4 -type f -name mongod 2>/dev/null | head -1)"
 if [[ -z "$BIN" ]]; then
   echo "mongod binary not found after extract."
   exit 1

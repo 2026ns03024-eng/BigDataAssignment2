@@ -26,4 +26,4 @@ UCI *Diabetes 130-US hospitals*, enriched with synthetic timestamps, vitals, and
 
 ## Author
 
-Fill name and BITS ID on the report cover before submission.
+See the completed report cover in [report/REPORT.md](report/REPORT.md).

@@ -20,14 +20,8 @@ if [[ -f "$PIDFILE" ]] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
   exit 0
 fi
 
-BIND="$MONGO_HOST"
-if [[ "$BIND" == "127.0.0.1" ]]; then
-  # Allow workers to connect when lab firewall permits
-  BIND="0.0.0.0"
-fi
-
-mongod --dbpath "$DBPATH" --port "$MONGO_PORT" --bind_ip "$BIND" \
+mongod --dbpath "$DBPATH" --port "$MONGO_PORT" --bind_ip "$MONGO_HOST" \
   --logpath "$LOGPATH" --fork --pidfilepath "$PIDFILE"
 
-echo "mongod started on port $MONGO_PORT (bind $BIND)"
+echo "mongod started on port $MONGO_PORT (bind $MONGO_HOST)"
 mongosh --host "$MONGO_HOST" --port "$MONGO_PORT" --eval 'db.runCommand({ ping: 1 })'

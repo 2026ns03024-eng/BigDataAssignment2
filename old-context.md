@@ -54,7 +54,7 @@ Implemented end-to-end **before** the user moved off BITS Prayogshala to a **sel
 2. **Run discovery on VM1** (repo root, no sudo):
    ```bash
    source scripts/source_cluster_env.sh
-   bash scripts/discover_cluster.sh | tee output/discover.log
+   mkdir -p output && bash scripts/discover_cluster.sh | tee output/discover.log
    ```
 3. **Inspect VM2** via SSH: Spark worker, Java, can it `mongosh`/`telnet` to VM1 Mongo on 27017?
 4. **Write or update `config.env`** with:

@@ -9,6 +9,12 @@ if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
   echo "  Exit sudo and run:  source scripts/source_cluster_env.sh" >&2
 fi
 
+for base in "$HOME"/mongo/mongodb-*/bin "$HOME/mongosh/bin"; do
+  if [[ -x "$base/mongod" || -x "$base/mongosh" ]]; then
+    export PATH="$base:$PATH"
+  fi
+done
+
 # Lab-provided snippets (if present)
 for f in /etc/profile.d/spark.sh /etc/profile.d/hadoop.sh /etc/profile.d/bigdata.sh; do
   if [[ -f "$f" ]]; then
