@@ -29,6 +29,4 @@ db.vitals.countDocuments()
 db.patients.countDocuments()
 ```
 
-**Screenshot (for report):** `mongosh` showing counts and one sample `encounters` document (redact if needed).
-
 Proceed to [06-mongo-analytics.md](06-mongo-analytics.md).

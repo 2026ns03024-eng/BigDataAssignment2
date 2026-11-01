@@ -1,6 +1,6 @@
 # Step 03 — Python dependencies and Spark connector JAR
 
-Load lab paths first:
+Load installed tool paths first:
 
 ```bash
 source scripts/source_cluster_env.sh
@@ -18,7 +18,8 @@ Or:
 bash scripts/install_python_deps.sh
 ```
 
-If `ensurepip` is missing, ask lab support or use a venv if allowed.
+If `ensurepip` is missing, install Python's pip package using your operating
+system's package manager, or use a virtual environment.
 
 Download the Mongo Spark connector JAR (Spark 3.x path by default):
 

@@ -1,4 +1,4 @@
-// MongoDB aggregation demos for Assignment 2 Scenario 3 (run in mongosh).
+// Healthcare readmission aggregation examples (run in mongosh).
 // Usage: mongosh "mongodb://HOST:PORT/readmission" --file queries/analytics.js
 
 const dbName = db.getName();

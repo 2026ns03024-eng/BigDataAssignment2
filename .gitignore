@@ -26,5 +26,8 @@ mongo-data/
 *.swp
 .idea/
 
-# Report build (optional PDF export)
-report/*.pdf
+# Local exports and infrastructure snapshots
+*.pdf
+*.docx
+cluster*.yaml
+cluster*.yml

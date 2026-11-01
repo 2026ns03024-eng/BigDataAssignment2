@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Discover cluster software for Assignment 2 Track C.
+# Discover MongoDB, Spark, and Python tooling.
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"

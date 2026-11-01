@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Track C: Spark MLlib readmission model — read MongoDB, train RF/GBT, write predictions back.
+Spark MLlib readmission model — read MongoDB, train RF/GBT, write predictions back.
 Run via: bash scripts/run_spark_train.sh
 """
 import json
@@ -104,7 +104,7 @@ def main():
     spark24 = cfg.get("USE_SPARK24_URI", "").strip() in ("1", "true", "yes")
 
     spark = (
-        SparkSession.builder.appName("BDS_Assignment2_Readmission_TrackC")
+        SparkSession.builder.appName("Healthcare_Readmission_Analytics")
         .config("spark.sql.execution.arrow.pyspark.enabled", "false")
         .getOrCreate()
     )

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate static charts for the assignment report (matplotlib Agg backend)."""
+"""Generate readmission analytics charts (matplotlib Agg backend)."""
 import json
 import sys
 from pathlib import Path
@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config_loader import load, mongo_uri  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
-FIG = ROOT / "report" / "figures"
+FIG = ROOT / "docs" / "figures"
 FIG.mkdir(parents=True, exist_ok=True)
 
 

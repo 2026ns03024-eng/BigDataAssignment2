@@ -1,4 +1,4 @@
-# Step 06 — MongoDB aggregation analytics (Track A operations)
+# Step 06 — MongoDB aggregation analytics
 
 Run the Python driver for aggregation summaries:
 
@@ -6,7 +6,7 @@ Run the Python driver for aggregation summaries:
 python3 scripts/mongo_analytics.py | tee output/mongo_analytics.log
 ```
 
-For manual / screenshot-friendly operator examples, use `mongosh`:
+For interactive operator examples, use `mongosh`:
 
 ```bash
 mongosh "mongodb://${MONGO_HOST}:${MONGO_PORT}/${MONGO_DB}" --file queries/analytics.js
@@ -18,7 +18,5 @@ Pipelines included:
 2. **`$graphLookup`** — prior hospital stays along `prev_encounter_id`  
 3. **`$setWindowFields`** — rolling mean heart rate within an encounter  
 4. **`$bucket`** — length-of-stay buckets with readmission rate  
-
-**Screenshot (for report):** One aggregation result (e.g. LOS bucket table or graphLookup prior-stay count).
 
 Proceed to [07-spark-training.md](07-spark-training.md).

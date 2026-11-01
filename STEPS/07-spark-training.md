@@ -31,14 +31,15 @@ db.predictions.countDocuments()
 db.predictions.findOne()
 ```
 
-**Screenshot (for report):** Spark driver log showing application finished, or Spark UI **Stages** view with tasks on worker nodes.
-
-## Charts and report numbers
+## Charts and results
 
 ```bash
 python3 scripts/make_charts.py
 ```
 
-Copy metrics from `output/metrics.json` into the results table in [report/REPORT.md](../report/REPORT.md).
+Charts are written to `docs/figures/`. See [docs/RESULTS.md](../docs/RESULTS.md)
+for the observed metrics and methodological limitations.
 
-Proceed to [08-screenshots.md](08-screenshots.md).
+The Spark master UI normally listens on port 8080. The application UI normally
+listens on port 4040 only while a job is running. Use the **Stages** and
+**Executors** tabs to inspect task execution; do not expose these interfaces publicly.

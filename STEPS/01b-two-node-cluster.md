@@ -1,8 +1,9 @@
-# Step 01b — Two-VM Spark cluster (agent: discover first, then edit)
+# Step 01b — Two-VM Spark cluster
 
-This project assumes **two Linux VMs** you control over SSH (Option B in the assignment brief). There is no shared lab UI — you must learn IPs, installed software, and open ports yourself.
+Use **two Linux VMs** you control over SSH. Discover the reachable private
+interfaces, installed software, and firewall settings before configuring services.
 
-## Agent checklist
+## Setup
 
 1. On **VM1** (driver): `mkdir -p output && bash scripts/discover_cluster.sh | tee output/discover.log`
 2. On **VM2**: same discover snippet for Java/Spark paths; test Mongo from VM2:
@@ -50,10 +51,6 @@ Do not export the project's `SPARK_MASTER=spark://...` setting while running the
 | `SPARK_MASTER` | `spark://<VM1-private-IP>:7077` unless YARN works (`discover` will suggest) |
 | `MONGO_SPARK_JAR` | From discover output (Spark 4 → `_2.13-11.1.0.jar`) |
 
-Set MongoDB's bind address to `MONGO_HOST`; the provided start script binds only to that address. If Mongo is **localhost-only**, set `SPARK_MASTER=local[4]` and `MONGO_HOST=127.0.0.1` on VM1 only and note the limitation in the report.
-
-## Screenshots for report
-
-Spark master UI with worker(s), `mongosh` aggregation sample, Spark job log — not a third-party lab portal.
+Set MongoDB's bind address to `MONGO_HOST`; the provided start script binds only to that address. If Mongo is **localhost-only**, set `SPARK_MASTER=local[4]` and `MONGO_HOST=127.0.0.1` for single-VM execution.
 
 Proceed to [03-python-deps.md](03-python-deps.md) after `config.env` is set.
